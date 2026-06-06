@@ -1,21 +1,45 @@
-
-
 Screen {
-  align: center middle;
+    align: center middle;
+    background: #0a0a0a;
+    layout: vertical;
+    overflow: hidden hidden;
+    scrollbar-gutter: stable;
+}
+
+Static {
+    width: 100%;
+    content-align: center middle;
+    color: #ff69b4;
 }
 
 ListView {
-  width: 100%;
-  height: 100%;
-  background: #0a0a0a;
-  border: solid pink;
-  align: center middle;
+    width: 40;
+    height: auto;
+    background: #0a0a0a;
+    border: solid #ff69b4;
+    align-horizontal: center;
+    margin-top: 1;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+ListItem {
+    padding: 1 4;
+    color: #ff69b4;
 }
 
 ListItem:hover {
-  background: #ffb7ce;
+    background: #ffb7ce;
 }
 
 ListItem:hover Label {
-  color: black;
+    color: #0a0a0a;
+}
+
+ListItem.--highlight {
+    background: #ff69b4;
+}
+
+ListItem.--highlight Label {
+    color: #0a0a0a;
 }
