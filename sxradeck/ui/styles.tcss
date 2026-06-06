@@ -16,7 +16,7 @@ ListView {
     width: 40;
     height: auto;
     background: #0a0a0a;
-    border: solid #ff69b4;
+    border: heavy #ff69b4;
     align-horizontal: center;
     margin-top: 1;
     overflow-x: hidden;
