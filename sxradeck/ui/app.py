@@ -1,16 +1,21 @@
+from textual import events
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.screen import Screen
-from textual.widgets import Header, ListView, ListItem, Label, Static
+from textual.widgets import Header, ListView, ListItem, Label, Static, RichLog, Footer
 from textual.containers import Center
 from pathlib import Path
+from sxradeck.core.command import Command
+from sxradeck.modules import SHADOWSCAN
+import asyncio
+
 
 # ─── Menu Screen Dictionary ─────────────────────────────────────────────────────
 
 MENU = {
     "SHADOWSCAN": {
-        "FREQ_SWEEP": None,           # iw dev wlan0 scan / iwlist wlan0 scanning
-        "BLE_PULSE": None,            # hcitool lescan
+        "FREQ_SWEEP": SHADOWSCAN.FREQ_SWEEP,
+        "BLE_PULSE": SHADOWSCAN.BLE_PULSE,
         "BT_SWEEP": None,             # hcitool scan
         "SIGNAL_MAP": None,           # iw dev / hciconfig -a
     },
@@ -80,6 +85,43 @@ MENU = {
     },
 }
 
+# ─── Output Screen ────────────────────────────────────────────────────────────────
+
+class OutputScreen(Screen):
+    BINDINGS = [Binding("escape", "go_back", "Back")]
+
+    def __init__(self, command: Command, params: dict = {}):
+        super().__init__()
+        self._command = command
+        self._params = params
+
+    def compose(self) -> ComposeResult:
+        yield Header()
+        yield RichLog(id="output", highlight=True)
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.run_worker(self._stream_output())
+
+    async def _stream_output(self) -> None:
+        log = self.query_one(RichLog)
+        cmd = self._command.cmd.format(**self._params)
+        log.write(f"$ {cmd}\n")
+        proc = await asyncio.create_subprocess_shell(
+            cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+
+        async for line in proc.stdout:
+            log.write(line.decode(errors="replace").rstrip())
+        await proc.wait()
+        log.write(f"\n[exit {proc.returncode}]")
+
+    def action_go_back(self) -> None:
+        self.app.pop_screen()
+
+
 # ─── Base Submenu Screen ─────────────────────────────────────────────────────
 
 class SubMenuScreen(Screen):
@@ -111,6 +153,8 @@ class MenuScreen(SubMenuScreen):
                     self.app.push_screen(MenuScreen(original_key, value))
                 elif callable(value):
                     value()
+                elif isinstance(value, Command):
+                    self.app.push_screen(OutputScreen(value))
                 elif value is None:
                     pass
                 break
@@ -144,6 +188,8 @@ class SxraDeck(App):
                     self.app.push_screen(MenuScreen(original_key, value))
                 elif callable(value):
                     value()
+                elif isinstance(value, Command):
+                    self.app.push_screen(OutputScreen(value))
                 elif value is None:
                     pass
                 break
