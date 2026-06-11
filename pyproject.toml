@@ -5,3 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sxradeck"
 version = "0.1.0"
+dependencies = [
+    "textual",
+]
+
+[project.scripts]
+sxradeck = "sxradeck.ui.app:main"
+
+[tool.setuptools.package-data]
+"sxradeck.ui" = ["*.txt", "*.tcss"]

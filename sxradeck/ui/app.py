@@ -194,6 +194,9 @@ class SxraDeck(App):
                     pass
                 break
 
-if __name__ == "__main__":
+def main():
     app = SxraDeck()
     app.run()
+
+if __name__ == "__main__":
+    main()
