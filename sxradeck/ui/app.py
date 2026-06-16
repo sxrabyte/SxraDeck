@@ -39,7 +39,7 @@ MENU = {
             "force deauth": None,     # aireplay-ng --deauth 5 -a <BSSID> wlan0
             "crack": None,            # aircrack-ng -w wordlist out.cap
         },
-        "GHOST_AP": None,             # hostapd hostapd.conf + dnsmasq
+        "ROGUE_AP": None,             # hostapd hostapd.conf + dnsmasq
         "NOISE_FLOOD": None,          # mdk4 wlan0 b -n "SSID"
     },
 
