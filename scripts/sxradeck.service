@@ -1,2 +1,25 @@
+# SxraDeck autostart - boots straight into the touch TUI on the Waveshare panel.
+#
+# Install (run as the deck user, e.g. sxrabyte):
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/sxradeck.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now sxradeck.service
+#   sudo loginctl enable-linger $USER      # start it at boot without a login
+#
+# Adjust WorkingDirectory below if you cloned the repo somewhere else.
+[Unit]
+Description=SxraDeck touch TUI
+After=graphical-session.target
+
 [Service]
-ExecStart=/usr/bin/env sxradeck
+Type=simple
+WorkingDirectory=%h/PycharmProjects/SxraDeck
+ExecStart=%h/PycharmProjects/SxraDeck/scripts/sxradeck-kiosk.sh
+Restart=on-failure
+RestartSec=2
+# The kiosk wrapper owns the display (cage or startx), so no DISPLAY/WAYLAND
+# needs to be pre-set here.
+
+[Install]
+WantedBy=default.target

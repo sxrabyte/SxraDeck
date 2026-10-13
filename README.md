@@ -19,6 +19,16 @@ ComponentDetailsBoardRaspberry Pi Zero 2 W (quad-core ARM, 512MB RAM)DisplayWave
 ➤ Stack
 Built entirely in Python using Textual for the TUI, gpiozero for hardware input, and subprocess for tool execution. Autolaunches on boot via a systemd service.
 
+⌖ Touch UI
+The TUI is built for the resistive touchscreen — no key is ever required. Every screen has an on-screen ◀ BACK button, menu entries are finger-sized buttons, and any value a command needs (MAC, BSSID, channel, SSID, wordlist path) is tapped in on a built-in on-screen keyboard (hex pad for addresses, number pad for channels, full keyboard for text). Disruptive commands ask for confirmation first. The keyboard shortcuts (Escape to go back, etc.) still work when a keyboard is attached.
+
+▶ Running
+    python -m venv .venv && . .venv/bin/activate
+    pip install -e .
+    sxradeck                 # run in any terminal (mouse = touch)
+
+On the deck, boot straight in with scripts/sxradeck-kiosk.sh (auto-starts a mouse-capable terminal on the panel) and the systemd unit in scripts/. A bare framebuffer console does NOT deliver touch to a terminal app — see docs/TOUCH-SETUP.md for the full Waveshare 3.5B setup (display stack, touch calibration, autostart).
+
 𝐍𝐨𝐰 𝐥𝐨𝐚𝐝𝐢𝐧𝐠. . .
 Early stages. Hardware just arrived. The deck is being built.
 

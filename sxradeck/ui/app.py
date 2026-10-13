@@ -1,202 +1,109 @@
-from textual import events
-from textual.app import App, ComposeResult
-from textual.binding import Binding
-from textual.screen import Screen
-from textual.widgets import Header, ListView, ListItem, Label, Static, RichLog, Footer
-from textual.containers import Center
+"""SxraDeck - touch-first TUI launcher.
+
+The whole interface is tappable: no key is required to navigate, go back, or
+type a value. See sxradeck/ui/screens.py for the screen flow and
+sxradeck/ui/keyboard.py for the on-screen keyboard.
+"""
+
 from pathlib import Path
+
+from textual.app import App
+
 from sxradeck.core.command import Command
 from sxradeck.modules import SHADOWSCAN
-import asyncio
+from sxradeck.ui.screens import MenuScreen
 
-
-# ─── Menu Screen Dictionary ─────────────────────────────────────────────────────
+# ─── Menu ─────────────────────────────────────────────────────────────────────
+# dict      -> submenu
+# Command   -> run (prompts for params first if Command.prompt is set)
+# None      -> placeholder, shown dimmed as "not wired up yet"
 
 MENU = {
     "SHADOWSCAN": {
         "FREQ_SWEEP": SHADOWSCAN.FREQ_SWEEP,
         "BLE_PULSE": SHADOWSCAN.BLE_PULSE,
-        "BT_SWEEP": None,             # hcitool scan
-        "SIGNAL_MAP": None,           # iw dev / hciconfig -a
+        "BT_SWEEP": SHADOWSCAN.BT_SWEEP,
+        "SIGNAL_MAP": SHADOWSCAN.SIGNAL_MAP,
     },
 
     "STATIC": {
         "DARKMODE": {
-            "enable": None,           # airmon-ng start wlan0
-            "disable": None,          # airmon-ng stop wlan0
+            "enable": None,
+            "disable": None,
         },
         "INTERCEPT": {
-            "all channels": None,     # airodump-ng wlan0
-            "select channel": None,   # airodump-ng -c <CH> wlan0 (prompt for CH)
-            "target BSSID": None,     # airodump-ng --bssid <BSSID> -w out wlan0
+            "all channels": None,
+            "select channel": None,
+            "target BSSID": None,
         },
         "INJECT": {
-            "deauth": None,           # aireplay-ng --deauth 10 -a <BSSID> wlan0
-            "fakeauth": None,         # aireplay-ng --fakeauth 0 -a <BSSID> wlan0
+            "deauth": None,
+            "fakeauth": None,
         },
         "HANDSHAKE_RIP": {
-            "capture": None,          # airodump-ng -c <CH> --bssid <BSSID> -w out wlan0
-            "force deauth": None,     # aireplay-ng --deauth 5 -a <BSSID> wlan0
-            "crack": None,            # aircrack-ng -w wordlist out.cap
+            "capture": None,
+            "force deauth": None,
+            "crack": None,
         },
-        "ROGUE_AP": None,             # hostapd hostapd.conf + dnsmasq
-        "NOISE_FLOOD": None,          # mdk4 wlan0 b -n "SSID"
+        "ROGUE_AP": None,
+        "NOISE_FLOOD": None,
     },
 
     "BLUEJACK": {
-        "BT_INIT": None,              # hciconfig hci0 up + piscan
-        "BT_SWEEP": None,             # hcitool scan
-        "BLE_PULSE": None,            # hcitool lescan
-        "TARGET_INFO": None,          # hcitool info <MAC> + sdptool browse <MAC>
-        "DEEP_PULSE": None,           # gatttool -b <MAC> --primary
-        "ID_SPOOF": None,             # hciconfig down + bdaddr -i hci0 <MAC>
+        "BT_INIT": None,
+        "BT_SWEEP": None,
+        "BLE_PULSE": None,
+        "TARGET_INFO": None,
+        "DEEP_PULSE": None,
+        "ID_SPOOF": None,
     },
 
     "PHANTOM": {
-        "FACE_SWAP": None,            # ip link set wlan0 down + macchanger -r + up
-        "BT_MASK": None,              # hciconfig hci0 down + bdaddr -i hci0 <MAC>
+        "FACE_SWAP": None,
+        "BT_MASK": None,
         "DARKNET": {
-            "enable": None,           # systemctl start tor
-            "disable": None,          # systemctl stop tor
-            "check": None,            # curl https://check.torproject.org/api/ip
+            "enable": None,
+            "disable": None,
+            "check": None,
         },
         "TUNNEL": {
-            "openvpn": None,          # openvpn --config file.ovpn
-            "wireguard": None,        # wg-quick up wg0
+            "openvpn": None,
+            "wireguard": None,
         },
-        "EXPOSURE_CHECK": None,       # curl ifconfig.me
-        "DEADSWITCH": None,           # iptables -P OUTPUT DROP
+        "EXPOSURE_CHECK": None,
+        "DEADSWITCH": None,
     },
 
     "SYSCORE": {
-        "SYS_VITALS": None,           # uname -a / vcgencmd measure_temp / free -h / df -h
-        "NET_STATUS": None,           # ip a / iw dev / hciconfig -a
+        "SYS_VITALS": None,
+        "NET_STATUS": None,
         "INTERFACE_CTL": {
-            "wlan up": None,          # ip link set wlan0 up
-            "wlan down": None,        # ip link set wlan0 down
-            "rfkill list": None,      # rfkill list
-            "rfkill unblock": None,   # rfkill unblock all
+            "wlan up": None,
+            "wlan down": None,
+            "rfkill list": None,
+            "rfkill unblock": None,
         },
-        "DISPLAY_CTL": None,          # /sys/class/backlight/ brightness
+        "DISPLAY_CTL": None,
         "POWER_CTL": {
-            "reboot": None,           # sudo reboot
-            "shutdown": None,         # sudo shutdown now
+            "reboot": None,
+            "shutdown": None,
         },
     },
 }
 
-# ─── Output Screen ────────────────────────────────────────────────────────────────
-
-class OutputScreen(Screen):
-    BINDINGS = [Binding("escape", "go_back", "Back")]
-
-    def __init__(self, command: Command, params: dict = {}):
-        super().__init__()
-        self._command = command
-        self._params = params
-
-    def compose(self) -> ComposeResult:
-        yield Header()
-        yield RichLog(id="output", highlight=True)
-        yield Footer()
-
-    def on_mount(self) -> None:
-        self.run_worker(self._stream_output())
-
-    async def _stream_output(self) -> None:
-        log = self.query_one(RichLog)
-        cmd = self._command.cmd.format(**self._params)
-        log.write(f"$ {cmd}\n")
-        proc = await asyncio.create_subprocess_shell(
-            cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-
-        async for line in proc.stdout:
-            log.write(line.decode(errors="replace").rstrip())
-        await proc.wait()
-        log.write(f"\n[exit {proc.returncode}]")
-
-    def action_go_back(self) -> None:
-        self.app.pop_screen()
-
-
-# ─── Base Submenu Screen ─────────────────────────────────────────────────────
-
-class SubMenuScreen(Screen):
-    BINDINGS = [Binding("escape", "go_back", "Back")]
-
-    def action_go_back(self) -> None:
-        self.app.pop_screen()
-
-class MenuScreen(SubMenuScreen):
-    def __init__(self, title: str, entries: dict):
-        super().__init__()
-        self.title = title
-        self.entries = entries
-
-    def compose(self) -> ComposeResult:
-        yield Header()
-        with Center():
-            with ListView():
-                for key in self.entries.keys():
-                    safe_id = key.replace(" ", "_").lower()
-                    yield ListItem(Label(key), id=safe_id)
-
-    def on_list_view_selected(self, event):
-        item_id = event.item.id
-
-        for original_key, value in self.entries.items():
-            if original_key.replace(" ", "_").lower() == item_id:
-                if isinstance(value, dict):
-                    self.app.push_screen(MenuScreen(original_key, value))
-                elif callable(value):
-                    value()
-                elif isinstance(value, Command):
-                    self.app.push_screen(OutputScreen(value))
-                elif value is None:
-                    pass
-                break
-
-# ─── Main Menu ────────────────────────────────────────────────────────────────
 
 class SxraDeck(App):
     CSS_PATH = str(Path(__file__).parent / "styles.tcss")
+    TITLE = "SxraDeck"
 
-    def compose(self):
-        base_dir = Path(__file__).parent.parent.parent
-        banner = base_dir / "sxradeck" / "ui" / "banner.txt"
+    def on_mount(self) -> None:
+        # The home menu is just a MenuScreen with root=True (Back becomes Exit).
+        self.push_screen(MenuScreen("☠ SXRADECK ☠", MENU, root=True))
 
-        with open(banner, "r", encoding="utf-8") as f:
-            banner = f.read()
-
-        yield Static(banner)
-        yield Header()
-        with Center():
-            with ListView():
-                for key in MENU.keys():
-                    safe_id = key.replace(" ", "_").lower()
-                    yield ListItem(Label(key), id=safe_id)
-
-    def on_list_view_selected(self, event):
-        item_id = event.item.id
-
-        for original_key, value in MENU.items():
-            if original_key.replace(" ", "_").lower() == item_id:
-                if isinstance(value, dict):
-                    self.app.push_screen(MenuScreen(original_key, value))
-                elif callable(value):
-                    value()
-                elif isinstance(value, Command):
-                    self.app.push_screen(OutputScreen(value))
-                elif value is None:
-                    pass
-                break
 
 def main():
-    app = SxraDeck()
-    app.run()
+    SxraDeck().run()
+
 
 if __name__ == "__main__":
     main()

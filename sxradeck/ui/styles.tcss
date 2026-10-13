@@ -1,45 +1,232 @@
+/* ─── SxraDeck touch theme ──────────────────────────────────────────────────
+   Tuned for the Waveshare 3.5" panel (480x320 ~= 60x20 cells).
+   Everything is sized for a fingertip: buttons are >=3 cells tall.
+*/
+
+$dk-pink: #ff69b4;
+$dk-pink-dim: #a84a78;
+$dk-pink-hot: #ffb7ce;
+$dk-bg: #0a0a0a;
+$dk-panel: #141018;
+$dk-danger: #ff4d6d;
+$dk-go: #39ff88;
+
 Screen {
-    align: center middle;
-    background: #0a0a0a;
+    background: $dk-bg;
+    color: $dk-pink;
     layout: vertical;
-    overflow: hidden hidden;
-    scrollbar-gutter: stable;
 }
 
-Static {
+/* ─── Top bar: on-screen Back + title ─────────────────────────────────────── */
+#topbar {
+    dock: top;
+    height: 3;
+    width: 100%;
+    background: $dk-panel;
+    border-bottom: heavy $dk-pink-dim;
+}
+
+.backbtn {
+    width: 12;
+    height: 3;
+    min-width: 10;
+    border: none;
+    background: $dk-pink-dim;
+    color: $dk-bg;
+    text-style: bold;
+}
+.backbtn:hover { background: $dk-pink-hot; }
+.backbtn:focus { text-style: bold; }
+
+#topbar-title {
+    width: 1fr;
+    height: 3;
+    content-align: center middle;
+    text-style: bold;
+    color: $dk-pink;
+}
+
+/* ─── Menus ────────────────────────────────────────────────────────────────── */
+#menu-scroll {
+    width: 100%;
+    height: 1fr;
+    padding: 1 2;
+    scrollbar-size: 2 1;
+}
+
+.menu-btn {
+    width: 100%;
+    height: 3;
+    margin-bottom: 1;
+    border: none;
+    background: $dk-panel;
+    color: $dk-pink;
+    content-align: left middle;
+    text-align: left;
+    text-style: bold;
+}
+.menu-btn:hover { background: $dk-pink; color: $dk-bg; }
+.menu-btn:focus { background: $dk-pink-dim; color: $dk-bg; }
+
+.menu-btn-disabled {
+    color: $dk-pink-dim;
+    text-style: none;
+}
+.menu-btn-disabled:hover { background: $dk-panel; color: $dk-pink-dim; }
+
+/* ─── Parameter entry ──────────────────────────────────────────────────────── */
+#param-scroll {
+    width: 100%;
+    height: 1fr;
+    padding: 1 2;
+}
+.param-head {
     width: 100%;
     content-align: center middle;
-    color: #ff69b4;
+    text-style: bold;
+    color: $dk-pink-hot;
+    margin-bottom: 1;
 }
+.param-row {
+    width: 100%;
+    height: 3;
+    margin-bottom: 1;
+}
+.param-name {
+    width: 40%;
+    height: 3;
+    content-align: left middle;
+    text-style: bold;
+}
+.param-edit {
+    width: 60%;
+    height: 3;
+    border: none;
+    background: $dk-panel;
+    color: $dk-pink-hot;
+    content-align: left middle;
+    text-align: left;
+}
+.param-edit:hover { background: $dk-pink-dim; color: $dk-bg; }
 
-ListView {
-    width: 40;
+#param-preview {
+    dock: bottom;
+    width: 100%;
     height: auto;
-    background: #0a0a0a;
-    border: heavy #ff69b4;
-    align-horizontal: center;
+    padding: 0 2;
+    color: $dk-pink-dim;
+    background: $dk-panel;
+}
+
+.run-btn {
+    width: 100%;
+    height: 3;
     margin-top: 1;
-    overflow-x: hidden;
-    overflow-y: hidden;
+    border: none;
+    background: $dk-go;
+    color: $dk-bg;
+    text-style: bold;
+}
+.run-btn:hover { background: $dk-pink-hot; }
+.run-btn:disabled { background: $dk-panel; color: $dk-pink-dim; }
+
+.stop-btn { background: $dk-danger; }
+.stop-btn:disabled { background: $dk-panel; color: $dk-pink-dim; }
+
+/* ─── Output ───────────────────────────────────────────────────────────────── */
+#output {
+    width: 100%;
+    height: 1fr;
+    background: $dk-bg;
+    color: $dk-pink-hot;
+    padding: 0 1;
+    scrollbar-size: 2 1;
+}
+#output-actions {
+    dock: bottom;
+    height: 3;
+    width: 100%;
+    padding: 0 2;
 }
 
-ListItem {
-    padding: 1 4;
-    color: #ff69b4;
+/* ─── On-screen keyboard ───────────────────────────────────────────────────── */
+#kbd {
+    width: 100%;
+    height: 100%;
+    background: $dk-bg;
 }
-
-ListItem:hover {
-    background: #ffb7ce;
+#kbd-title {
+    width: 100%;
+    height: 1;
+    content-align: center middle;
+    color: $dk-pink;
+    text-style: bold;
 }
-
-ListItem:hover Label {
-    color: #0a0a0a;
+#kbd-buffer {
+    width: 100%;
+    height: 3;
+    content-align: left middle;
+    padding: 0 1;
+    background: $dk-panel;
+    border: heavy $dk-pink-dim;
+    color: $dk-pink-hot;
+    text-style: bold;
 }
-
-ListItem.--highlight {
-    background: #ff69b4;
+#kbd-keys {
+    width: 100%;
+    height: 1fr;
 }
+.kbd-row {
+    width: 100%;
+    height: 1fr;
+    align: center middle;
+}
+.kbd-key {
+    width: 1fr;
+    height: 100%;
+    min-width: 0;
+    margin: 0 1;
+    border: none;
+    background: $dk-panel;
+    color: $dk-pink;
+    text-style: bold;
+}
+.kbd-key:hover { background: $dk-pink; color: $dk-bg; }
+.kbd-special { background: #20141c; color: $dk-pink-hot; }
+.kbd-active { background: $dk-pink; color: $dk-bg; }
+.kbd-ok { background: $dk-go; color: $dk-bg; }
+.kbd-ok:hover { background: $dk-pink-hot; }
+.kbd-cancel { background: $dk-danger; color: $dk-bg; }
 
-ListItem.--highlight Label {
-    color: #0a0a0a;
+/* ─── Confirm modal ────────────────────────────────────────────────────────── */
+ConfirmScreen { align: center middle; }
+#confirm-box {
+    width: 90%;
+    height: auto;
+    max-width: 60;
+    padding: 1 2;
+    background: $dk-panel;
+    border: heavy $dk-danger;
+}
+#confirm-title {
+    width: 100%;
+    content-align: center middle;
+    color: $dk-danger;
+    text-style: bold;
+}
+.confirm-label {
+    width: 100%;
+    content-align: center middle;
+    text-style: bold;
+    color: $dk-pink-hot;
+    margin-top: 1;
+}
+.confirm-cmd {
+    width: 100%;
+    color: $dk-pink-dim;
+    margin: 1 0;
+}
+#confirm-actions {
+    width: 100%;
+    height: 3;
 }
